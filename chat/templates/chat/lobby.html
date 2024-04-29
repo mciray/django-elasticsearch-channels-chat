@@ -1,35 +1,101 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <title>Lobby</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 80px; /* padding for navbar */
+        }
+        .navbar {
+            box-shadow: 0 2px 5px rgba(0,0,0,.1);
+        }
+        .container {
+            max-width: 800px; /* narrower container for focus */
+        }
+        .footer {
+            padding-top: 20px;
+            text-align: center;
+            margin-top: 40px;
+            border-top: 1px solid #EEE;
+        }
+        .online-status {
+            color: green;
+            visibility: hidden; /* Initially hide the tick mark */
+        }
+        .online-status.visible {
+            visibility: visible;
+        }
+    </style>
 </head>
 <body>
-    {% if user.is_authenticated %}
-        <p>Welcome, {{ user.username }}!</p>
-        <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
-    {% else %}
-        <p>You are not logged in.</p>
-        <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
-    {% endif %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">ChatApp</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Welcome, {{ user.username }}!</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-danger" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary" href="{% url 'login' %}">Login</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
 
     <div class="container">
-        <h1 class="mt-5">Lobby</h1>
+        <h1>Lobby</h1>
         <p>Select a user to start chatting:</p>
         <div class="list-group">
             {% for user in users %}
-            <a href="{% url 'create_room' user.username %}" class="list-group-item list-group-item-action">
-                Chat with {{ user.username }}
-            </a>
+                <a href="{% url 'create_room' user.username %}" class="list-group-item list-group-item-action">
+                    Chat with {{ user.username }}
+                    <span class="online-status" id="status-{{ user.username }}"></span>
+                </a>
             {% endfor %}
         </div>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
+    <div class="footer">
+        <p>&copy; 2023 ChatApp. All rights reserved.</p>
+    </div>
+
+    
+    <script>
+        const statusSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/status/'
+        );
+
+        statusSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log(data);
+            const userElement = document.getElementById('status-' + data.username);
+            if (userElement) {
+                if (data.is_online) {
+                    userElement.classList.add('visible');
+                    userElement.textContent = '✔'; // Yeşil işaret
+                } else {
+                    userElement.classList.remove('visible');
+                    userElement.textContent = ''; // Yeşil işareti kaldır
+                }
+            }
+        };
+    </script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
