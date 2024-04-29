@@ -10,13 +10,13 @@ Bu projenin ne yaptığı ve kimin için olduğu hakkında kısa bir açıklama
 Projeyi klonlayın
 
 ```bash
-  git clone https://link-to-project
+  git clone [https://link-to-project](https://github.com/mciray/django-channels-chat.git)
 ```
 
 Proje dizinine gidin
 
 ```bash
-  cd my-project
+  cd mywebsite
 ```
 
 Öncelikle bir sanal ortam oluşturun:
