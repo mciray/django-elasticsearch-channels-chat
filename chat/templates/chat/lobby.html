@@ -63,10 +63,10 @@
         <p>Select a user to start chatting:</p>
         <div class="list-group">
             {% for user in users %}
-                <a href="{% url 'create_room' user.username %}" class="list-group-item list-group-item-action">
-                    Chat with {{ user.username }}
-                    <span class="online-status" id="status-{{ user.username }}"></span>
-                </a>
+            <a href="{% url 'create_room' user.username %}" class="list-group-item list-group-item-action">
+                Chat with {{ user.username }}
+                <span class="online-status" id="status-{{ user.username }}"></span>
+            </a>
             {% endfor %}
         </div>
     </div>
@@ -75,12 +75,37 @@
         <p>&copy; 2023 ChatApp. All rights reserved.</p>
     </div>
 
-    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         const statusSocket = new WebSocket(
             'ws://' + window.location.host + '/ws/status/'
         );
-
+    
+        // WebSocket bağlantısının durumu
+        let isSocketOpen = false;
+    
+        statusSocket.onopen = function() {
+            isSocketOpen = true;
+        };
+    
+        statusSocket.onclose = function() {
+            isSocketOpen = false;
+            // Bağlantı kapandığında 5 saniye sonra tekrar bağlanmayı dene
+            setTimeout(function() {
+                statusSocket = new WebSocket(
+                    'ws://' + window.location.host + '/ws/status/'
+                );
+            }, 5000);
+        };
+    
+        setInterval(function() {
+            if (isSocketOpen) {
+                statusSocket.send(JSON.stringify({ type: 'keep_alive' }));
+            }
+        }, 30000);
+    
         statusSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             console.log(data);
@@ -88,16 +113,31 @@
             if (userElement) {
                 if (data.is_online) {
                     userElement.classList.add('visible');
-                    userElement.textContent = '✔'; // Yeşil işaret
+                    userElement.textContent = '✔';
+                    // Kullanıcının çevrimiçi olduğunu localStorage'a kaydet
+                    localStorage.setItem(data.username, 'online');
                 } else {
                     userElement.classList.remove('visible');
-                    userElement.textContent = ''; // Yeşil işareti kaldır
+                    userElement.textContent = ''; 
+                    // Kullanıcının çevrimdışı olduğunda localStorage'dan sil
+                    localStorage.removeItem(data.username);
                 }
             }
         };
+    
+        // Sayfa yüklendiğinde localStorage'dan kullanıcıların durumunu al ve işle
+        window.onload = function() {
+            for (let i = 0; i < localStorage.length; i++) {
+                const username = localStorage.key(i);
+                const userElement = document.getElementById('status-' + username);
+                if (userElement) {
+                    userElement.classList.add('visible');
+                    userElement.textContent = '✔';
+                }
+            }
+        };
+    
     </script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
 </body>
 </html>
