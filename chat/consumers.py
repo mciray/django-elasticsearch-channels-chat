@@ -1,8 +1,29 @@
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer,WebsocketConsumer
+from channels.generic.websocket import WebsocketConsumer,AsyncWebsocketConsumer
 from asgiref.sync import async_to_sync
-from channels.auth import AuthMiddlewareStack
 
+
+class UserStatusConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_group_name = 'user_status'
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    async def user_status(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'status',
+            'username': event['username'],
+            'is_online': event['is_online'],
+        }))
 class RoomConsumer(WebsocketConsumer):
     def connect(self):
         raw_room_name = self.scope['url_route']['kwargs']['room_name']
@@ -17,6 +38,7 @@ class RoomConsumer(WebsocketConsumer):
         )
 
         self.accept()
+       
 
     def disconnect(self, close_code):
         # Oda grubundan bu kanalı çıkar
@@ -28,11 +50,10 @@ class RoomConsumer(WebsocketConsumer):
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
-
         user = self.scope['user']
+
         username = user.username if user.is_authenticated else 'Anonim'
-     
-        # Oda grubundaki herkese mesajı gönder
+
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -43,13 +64,14 @@ class RoomConsumer(WebsocketConsumer):
             }
         )
 
+
     def chat_message(self, event):
         message = event['message']
 
         username = event['username']
 
         sender = 'self' if self.scope['user'].username == username else 'other'
-        # WebSocket'e mesajı gönder
+        
         self.send(text_data=json.dumps({
             'type': 'chat',
             'message': message,
