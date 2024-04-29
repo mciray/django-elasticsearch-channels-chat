@@ -48,29 +48,30 @@
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            console.log(data)
+            console.log(data);
             const messageBox = document.createElement('div');
             messageBox.className = 'message-box';
-        
+            
             if (data.type === 'chat') {
                 const messageDiv = document.createElement('div');
-                messageDiv.textContent = data.message;
+                messageDiv.textContent = `${data.username}: ${data.message}`;
                 messageDiv.className = 'message';
-        
+                
                 // Göndericiye göre mesaj kutusunu hizala
                 if (data.sender === 'self') {
                     messageBox.className += ' sender-message';
                 } else {
                     messageBox.className += ' receiver-message';
                 }
-        
+                
                 messageBox.appendChild(messageDiv);
                 chatLog.appendChild(messageBox);
-        
+                
                 // Scroll to bottom
                 chatLog.scrollTop = chatLog.scrollHeight;
             }
         };
+        
 
         document.querySelector('#chat-message-submit').onclick = function(e) {
             const messageInputDom = document.querySelector('#chat-message-input');
