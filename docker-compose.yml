@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    command: daphne mywebsite.asgi:application --port 8000 --bind 0.0.0.0
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"

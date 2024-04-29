@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room: {{ room_name }}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <style>
+        .message-box {
+            margin-bottom: 10px;
+            overflow: auto;
+        }
+        .sender-message {
+            background-color: #e6f2ff;
+            border-radius: 10px;
+            padding: 10px;
+            margin-left: auto; /* Sağa hizalama */
+            max-width: 70%; /* Maksimum genişlik belirleme */
+        }
+        .receiver-message {
+            background-color: #cce0ff;
+            border-radius: 10px;
+            padding: 10px;
+            margin-right: auto; /* Sola hizalama */
+            max-width: 70%; /* Maksimum genişlik belirleme */
+        }
+    </style>
+    <div class="container mt-5">
+        <span id="room-name" style="display:none;">{{ room_name }}</span>
+        <h1 class="mb-4">Chat Room: {{ room_name }}</h1>
+        <div id="chat-log"></div>
+        <div class="row mt-3">
+            <div class="col-9">
+                <input id="chat-message-input" type="text" class="form-control" placeholder="Type your message here...">
+            </div>
+            <div class="col-3">
+                <button id="chat-message-submit" class="btn btn-primary btn-block">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const roomName = document.getElementById('room-name').textContent;
+        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/socket-server/${roomName}/`);
+        const chatLog = document.getElementById('chat-log');
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log(data)
+            const messageBox = document.createElement('div');
+            messageBox.className = 'message-box';
+        
+            if (data.type === 'chat') {
+                const messageDiv = document.createElement('div');
+                messageDiv.textContent = data.message;
+                messageDiv.className = 'message';
+        
+                // Göndericiye göre mesaj kutusunu hizala
+                if (data.sender === 'self') {
+                    messageBox.className += ' sender-message';
+                } else {
+                    messageBox.className += ' receiver-message';
+                }
+        
+                messageBox.appendChild(messageDiv);
+                chatLog.appendChild(messageBox);
+        
+                // Scroll to bottom
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({'message': message}));
+            messageInputDom.value = '';
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        chatSocket.onerror = function(e) {
+            console.error('An error occurred!');
+        };
+    </script>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
