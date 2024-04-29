@@ -16,7 +16,7 @@ Projeyi klonlayın
 Proje dizinine gidin
 
 ```bash
-  cd my-project
+  cd mywebsite
 ```
 
 Öncelikle bir sanal ortam oluşturun:
