@@ -6,10 +6,9 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth import logout
 from django.http import JsonResponse
-
+from .models import Message
 from chat.documents import ArticleDocument
 def search_articles(request):
-    
     q = request.GET.get('q', '')
     if q:
         articles = ArticleDocument.search().query("match", title=q).to_queryset()
@@ -17,6 +16,7 @@ def search_articles(request):
     else:
         results = []
     return JsonResponse({'results': results})
+
 @login_required
 def lobby(request):
     users = User.objects.exclude(username=request.user.username)
@@ -26,8 +26,10 @@ def lobby(request):
 
 @login_required
 def room(request, room_name):
+    messages = Message.objects.filter(room=room_name).order_by('timestamp')
     return render(request, 'chat/room.html', {
-        'room_name': room_name
+        'room_name': room_name,
+        'messages': messages
     })
 
 
@@ -44,9 +46,12 @@ def register(request):
 
 @login_required
 def create_room(request, username):
-    room_name = f"{request.user.username}_{username}"  
-    return HttpResponseRedirect(reverse('room', args=[room_name]))
+    
+    sorted_usernames = sorted([request.user.username, username])
+    room_name = "_".join(sorted_usernames)
 
+    # Oluşturulan oda adıyla 'room' view'ına yönlendir
+    return redirect(reverse('room', args=[room_name]))
 def logout_view(request):
     logout(request)
     return redirect('lobby') 

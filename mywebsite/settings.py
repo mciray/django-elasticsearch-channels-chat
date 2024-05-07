@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'chat',
     'channels',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -39,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_elasticsearch_dsl',
-    'chat',
 ]
 
 ASGI_APPLICATION = 'mywebsite.asgi.application'
@@ -57,6 +57,12 @@ ELASTICSEARCH_DSL = {
         'hosts': 'elasticsearch:9200'
     },
 }
+
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'  
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

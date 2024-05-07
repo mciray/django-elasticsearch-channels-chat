@@ -10,9 +10,20 @@ services:
       - "8000:8000"
     depends_on:
       - redis
-      - elasticsearch  # Elasticsearch'e bağlılık ekle
+      - elasticsearch 
     environment:
-      - ELASTICSEARCH_URL=http://elasticsearch:9200  # Elasticsearch URL'si ortam değişkeni olarak ekle
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+
+  celery:
+    build: .
+    command: celery -A mywebsite worker -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
 
   redis:
     image: "redis:latest"
