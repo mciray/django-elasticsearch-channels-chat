@@ -5,13 +5,25 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth import logout
+from django.http import JsonResponse
 
-# Create your views here.
-
+from chat.documents import ArticleDocument
+def search_articles(request):
+    
+    q = request.GET.get('q', '')
+    if q:
+        articles = ArticleDocument.search().query("match", title=q).to_queryset()
+        results = [{'title': article.title, 'id': article.id} for article in articles]
+    else:
+        results = []
+    return JsonResponse({'results': results})
 @login_required
 def lobby(request):
-    users = User.objects.exclude(username=request.user.username)  
-    return render(request, 'chat/lobby.html', {'users': users})
+    users = User.objects.exclude(username=request.user.username)
+    q = request.GET.get('q', '')  
+    articles = ArticleDocument.search().query("match", title=q).to_queryset() if q else []
+    return render(request, 'chat/lobby.html', {'users': users, 'articles': articles})
+
 @login_required
 def room(request, room_name):
     return render(request, 'chat/room.html', {
