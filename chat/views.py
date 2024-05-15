@@ -7,12 +7,12 @@ from django.urls import reverse
 from django.contrib.auth import logout
 from django.http import JsonResponse
 from .models import Message
-from chat.documents import ArticleDocument
+from chat.documents import MessageDocument
 def search_articles(request):
     q = request.GET.get('q', '')
     if q:
-        articles = ArticleDocument.search().query("match", title=q).to_queryset()
-        results = [{'title': article.title, 'id': article.id} for article in articles]
+        messages = MessageDocument.search().query("match", content=q).to_queryset()
+        results = [{'username': message.user.username, 'id': message.id, 'content': message.content} for message in messages]
     else:
         results = []
     return JsonResponse({'results': results})
@@ -20,9 +20,8 @@ def search_articles(request):
 @login_required
 def lobby(request):
     users = User.objects.exclude(username=request.user.username)
-    q = request.GET.get('q', '')  
-    articles = ArticleDocument.search().query("match", title=q).to_queryset() if q else []
-    return render(request, 'chat/lobby.html', {'users': users, 'articles': articles})
+    
+    return render(request, 'chat/lobby.html', {'users': users})
 
 @login_required
 def room(request, room_name):
