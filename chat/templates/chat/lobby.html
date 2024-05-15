@@ -84,7 +84,7 @@
         <p>&copy; 2023 ChatApp. All rights reserved.</p>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
@@ -92,7 +92,7 @@
             event.preventDefault();
             var formData = new FormData(this);
             var query = formData.get('q');
-            fetch(`{% url 'search_articles' %}?q=${query}`)
+            fetch(`/search-articles/?q=${query}`)
                 .then(response => response.json())
                 .then(data => {
                     var resultsContainer = document.getElementById('search-results');
@@ -103,7 +103,7 @@
                         data.results.forEach(article => {
                             var item = document.createElement('li');
                             item.className = 'list-group-item';
-                            item.textContent = article.title;
+                            item.textContent = `Username: ${article.username}, Content: ${article.content}`;
                             list.appendChild(item);
                         });
                         resultsContainer.appendChild(list);
@@ -113,17 +113,18 @@
                 })
                 .catch(error => console.error('Error fetching the articles:', error));
         });
-        const statusSocket = new WebSocket(
+
+        let statusSocket = new WebSocket(
             'ws://' + window.location.host + '/ws/status/'
         );
-    
+
         // WebSocket bağlantısının durumu
         let isSocketOpen = false;
-    
+
         statusSocket.onopen = function() {
             isSocketOpen = true;
         };
-    
+
         statusSocket.onclose = function() {
             isSocketOpen = false;
             // Bağlantı kapandığında 5 saniye sonra tekrar bağlanmayı dene
@@ -133,16 +134,15 @@
                 );
             }, 5000);
         };
-    
+
         setInterval(function() {
             if (isSocketOpen) {
                 statusSocket.send(JSON.stringify({ type: 'keep_alive' }));
             }
         }, 30000);
-    
+
         statusSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            console.log(data);
             const userElement = document.getElementById('status-' + data.username);
             if (userElement) {
                 if (data.is_online) {
@@ -158,7 +158,7 @@
                 }
             }
         };
-    
+
         // Sayfa yüklendiğinde localStorage'dan kullanıcıların durumunu al ve işle
         window.onload = function() {
             for (let i = 0; i < localStorage.length; i++) {
@@ -170,8 +170,6 @@
                 }
             }
         };
-    
     </script>
-    
 </body>
 </html>
